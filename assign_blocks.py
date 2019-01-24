@@ -2,28 +2,22 @@
 
 # board = pcbnew.LoadBoard("/home/geoff/work/provel/printer/board/printer-board.kicad_pcb")
 
-def info(object, spacing=10, collapse=1):
-    """Print methods and doc strings.
-    Takes module, class, list, dictionary, or string."""
-    methodList = [method for method in dir(object) if callable(getattr(object, method))]
-    processFunc = collapse and (lambda s: " ".join(s.split())) or (lambda s: s)
-    print "\n".join(["%s %s" %
-                      (method.ljust(spacing),
-                       processFunc(str(getattr(object, method).__doc__)))
-                     for method in methodList])
+from pcbnew import GetBoard
 
-from pcbnew import *
+
+def get_pad_info(pad):
+    return (pad.GetName(), {'netcode': pad.GetNetCode(), 'netname': pad.GetNetname()})
+
+
+def get_module_info(module):
+    pads = {padname: pad for padname, pad in map(get_pad_info, module.Pads())}
+    return {'refdes': module.GetReference(), 'description': module.GetDescription(), 'pads': pads}
+
 
 def main():
     board = GetBoard()
 
-    modules = board.GetModules() # Iterable, not indexable
-    for module in modules:
-        pads = list(module.Pads())
-        if len(pads) > 0:
-            for pad in pads:
-                net = pad.GetNet()
-
+    modules = [get_module_info(m) for m in board.GetModules()]
 
 
 if __name__ == "__main__":
